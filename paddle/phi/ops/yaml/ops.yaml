@@ -974,7 +974,7 @@
   traits : paddle::dialect::ForwardOnlyTrait
 
 - op : clip_tensor
-  args : (Tensor x, Tensor min, Tensor max, int[] shape,)
+  args : (Tensor x, Tensor min, Tensor max)
   output : Tensor(out)
   infer_meta :
     func : UnchangedInferMeta
