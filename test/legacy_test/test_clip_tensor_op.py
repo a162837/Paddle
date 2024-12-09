@@ -1,0 +1,57 @@
+# Copyright (c) 2024 PaddlePaddle Authors. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import unittest
+
+import numpy as np
+from op_test import OpTest
+
+import paddle
+from paddle import base
+from paddle.base import core
+
+
+class TestClipTensorOp(OpTest):
+    def setUp(self):
+        self.op_type = "clip_tensor"
+        self.python_api = paddle.tensor.math.clip_tensor
+        self.initTestCase()
+        self.x = np.random.random(size=self.shape).astype(self.dtype)
+        self.min = np.random.random(size=self.shape).astype(self.dtype)
+        self.max = np.random.random(size=self.shape).astype(self.dtype)
+
+        self.inputs = {'x': self.x, 'min': self.min, 'max': self.max}
+        out = np.clip(self.x, self.min, self.max)
+        self.outputs = {'out': out}
+
+    def initTestCase(self):
+        self.dtype = np.float32
+        self.shape = (10, 10)
+
+    def test_check_output(self):
+        self.check_output(check_pir=True)
+
+    def test_check_grad(self):
+        self.check_grad(['x'], 'out', check_pir=True)
+
+
+class TestCase1(TestClipTensorOp):
+    def initTestCase(self):
+        self.dtype = np.float32
+        self.shape = (8, 16, 8)
+
+
+if __name__ == '__main__':
+    paddle.enable_static()
+    unittest.main()
