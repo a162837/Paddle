@@ -53,13 +53,13 @@ class TestClipTensorOp(OpTest):
 
 class TestCase1(TestClipTensorOp):
     def initTestCase(self):
-        self.dtype = np.float32
+        self.dtype = np.float64
         self.shape = (8, 16, 8)
 
 
 class TestCase1(TestClipTensorOp):
     def initTestCase(self):
-        self.dtype = np.float32
+        self.dtype = np.float64
         self.shape = (2, 8, 16, 8)
 
 if __name__ == '__main__':
