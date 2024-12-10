@@ -57,5 +57,4 @@ class TestCase1(TestClipTensorOp):
         self.shape = (10, 4, 5)
 
 if __name__ == '__main__':
-    paddle.enable_static()
     unittest.main()
