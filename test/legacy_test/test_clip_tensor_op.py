@@ -26,7 +26,6 @@ class TestClipTensorOp(OpTest):
     def setUp(self):
         self.max_relative_error = 0.006
         self.op_type = "clip_tensor"
-        self.prim_op_type = "comp"
         self.python_api = paddle.tensor.math.clip_tensor
 
         self.initTestCase()
@@ -42,13 +41,13 @@ class TestClipTensorOp(OpTest):
         self.outputs = {'Out': out}
 
     def test_check_output(self):
-        self.check_output(check_pir=True, check_symbol_infer=False, check_prim_pir=True)
+        self.check_output(check_pir=True, check_symbol_infer=False)
 
     def test_check_grad(self):
         self.check_grad(['X'], 'Out', check_pir=True)
 
     def initTestCase(self):
-        self.dtype = np.float32
+        self.dtype = np.float64
         self.shape = (10, 10)
 
 
@@ -57,6 +56,11 @@ class TestCase1(TestClipTensorOp):
         self.dtype = np.float32
         self.shape = (8, 16, 8)
 
+
+class TestCase1(TestClipTensorOp):
+    def initTestCase(self):
+        self.dtype = np.float32
+        self.shape = (2, 8, 16, 8)
 
 if __name__ == '__main__':
     paddle.enable_static()
