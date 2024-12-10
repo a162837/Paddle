@@ -27,7 +27,7 @@ namespace phi {
 template <typename T>
 struct ClipTensorFunctor {
   inline HOSTDEVICE T operator()(const T x, const T min_, const T max_) const {
-    return x < min_ ? min_ : (x > max_ ? max_ : x);
+    return x < min_ ? min_ : x > max_ ? max_ : x;
   }
 };
 

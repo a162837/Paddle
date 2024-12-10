@@ -48,13 +48,13 @@ class TestClipTensorOp(OpTest):
 
     def initTestCase(self):
         self.dtype = np.float32
-        self.shape = (4, 5)
+        self.shape = (10, 10)
 
 
 class TestCase1(TestClipTensorOp):
     def initTestCase(self):
         self.dtype = np.float32
-        self.shape = (4, 4, 5)
+        self.shape = (10, 4, 5)
 
 if __name__ == '__main__':
     paddle.enable_static()
