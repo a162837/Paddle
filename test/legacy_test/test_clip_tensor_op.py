@@ -41,10 +41,10 @@ class TestClipTensorOp(OpTest):
         self.outputs = {'Out': out}
 
     def test_check_output(self):
-        self.check_output(check_pir=True, check_symbol_infer=False)
+        self.check_output(check_pir=True, check_symbol_infer=False, check_cinn=True, check_prim_pir=True)
 
     def test_check_grad(self):
-        self.check_grad(['X'], 'Out', check_pir=True)
+        self.check_grad(['X'], 'Out', check_pir=True, check_cinn=True, check_prim_pir=True)
 
     def initTestCase(self):
         self.dtype = np.float32
