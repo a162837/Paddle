@@ -31,8 +31,8 @@ class TestClipTensorOp(OpTest):
         self.initTestCase()
 
         self.x = np.random.random(size=self.shape).astype(self.dtype)
-        self.min = np.random.random(size=self.shape).astype(self.dtype)
-        self.max = np.random.random(size=self.shape).astype(self.dtype)
+        self.min = np.full(self.shape, 0.3).astype(self.dtype)
+        self.max = np.full(self.shape, 0.8).astype(self.dtype)
         self.x[np.abs(self.x - self.min) < self.max_relative_error] = 0.5
         self.x[np.abs(self.x - self.max) < self.max_relative_error] = 0.5
 
