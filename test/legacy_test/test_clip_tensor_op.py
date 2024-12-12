@@ -76,7 +76,7 @@ class TestCase3(TestClipTensorOp):
 
 
 @unittest.skipIf(
-    core.is_compiled_with_cuda()
+    not core.is_compiled_with_cuda()
     or not core.is_bfloat16_supported(core.CUDAPlace(0)),
     "core is not compiled with CUDA.",
 )
