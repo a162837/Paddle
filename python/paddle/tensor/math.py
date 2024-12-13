@@ -3772,7 +3772,7 @@ def clip_tensor(x: Tensor, min: Tensor, max: Tensor) -> Tensor:
 
         helper = LayerHelper('clip_tensor', **locals())
         output = helper.create_variable_for_type_inference(
-            dtype=helper.input_dtype('x')
+            dtype=helper.input_dtype('X')
         )
         helper.append_op(
             type='clip_tensor',

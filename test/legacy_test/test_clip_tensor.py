@@ -131,22 +131,22 @@ class TestClipTensorAPI(unittest.TestCase):
 
             with paddle.static.program_guard(paddle.static.Program()):
                 images = paddle.static.data(
-                    name='image1', shape=data_shape, dtype='float16'
+                    name='X', shape=data_shape, dtype='float16'
                 )
                 min = paddle.static.data(
-                    name='min1', shape=data_shape, dtype='float16'
+                    name='Min', shape=data_shape, dtype='float16'
                 )
                 max = paddle.static.data(
-                    name='max1', shape=data_shape, dtype='float16'
+                    name='Max', shape=data_shape, dtype='float16'
                 )
                 out = paddle.tensor.math.clip_tensor(images, min, max)
                 place = paddle.CUDAPlace(0)
                 exe = paddle.static.Executor(place)
                 res1 = exe.run(
                     feed={
-                        "image1": data,
-                        "min1": min1,
-                        "max1": max2,
+                        "X": data,
+                        "Min": min1,
+                        "Max": max2,
                     },
                     fetch_list=[out],
                 )
