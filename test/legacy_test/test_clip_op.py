@@ -488,5 +488,172 @@ class TestInplaceClipAPI(TestClipAPI):
         return x.clip_(min, max)
 
 
+class TestClipTensorOp(OpTest):
+    def setUp(self):
+        self.max_relative_error = 0.006
+        self.op_type = "clip_tensor"
+        self.python_api = paddle.tensor.math.clip_tensor
+
+        self.initTestCase()
+
+        self.x = np.random.random(size=self.shape).astype(self.dtype)
+        self.min = np.full(self.shape, 0.3).astype(self.dtype)
+        self.max = np.full(self.shape, 0.8).astype(self.dtype)
+        self.x[np.abs(self.x - self.min) < self.max_relative_error] = 0.5
+        self.x[np.abs(self.x - self.max) < self.max_relative_error] = 0.5
+
+        self.inputs = {'X': self.x, 'Min': self.min, 'Max': self.max}
+        out = np.clip(self.x, self.min, self.max)
+        self.outputs = {'Out': out}
+
+    def test_check_output(self):
+        self.check_output(check_pir=True, check_symbol_infer=False, check_cinn=True)
+
+    def test_check_grad(self):
+        self.check_grad(['X'], 'Out', check_pir=True, check_cinn=True)
+
+    def initTestCase(self):
+        self.dtype = np.float32
+        self.shape = (10, 10)
+
+
+class TestClipTensorOPCase1(TestClipTensorOp):
+    def initTestCase(self):
+        self.dtype = np.float32
+        self.shape = (10, 4, 5)
+
+
+def np_pd_equal(x_shape, min_shape=None, max_shape=None, dtype='float32'):
+    paddle.disable_static()
+    x = np.random.randn(*x_shape).astype(dtype)
+    max = np.random.randn(*max_shape).astype(dtype)
+    min = np.random.randn(*min_shape).astype(dtype)
+    np_out = np.clip(x, min, max)
+    x_pd = paddle.to_tensor(x, dtype=dtype)
+    min_pd = paddle.to_tensor(min, dtype=dtype)
+    max_pd = paddle.to_tensor(max, dtype=dtype)
+    pd_out = paddle.clip(x_pd, min_pd, max_pd)
+    np.allclose(pd_out.numpy(), np_out)
+
+    x_pd.clip_(min_pd, max_pd)
+    np.allclose(x_pd.numpy(), np_out)
+    paddle.enable_static()
+
+
+def np_pd_static_equal(
+    x_shape, min_shape=None, max_shape=None, dtype='float32'
+):
+    paddle.enable_static()
+    x = np.random.randn(*x_shape).astype(dtype)
+    max = np.random.randn(*max_shape).astype(dtype)
+    min = np.random.randn(*min_shape).astype(dtype)
+    np_out = np.clip(x, min, max)
+
+    place = base.CPUPlace()
+    if core.is_compiled_with_cuda():
+        place = paddle.CUDAPlace(0)
+
+    with paddle.static.program_guard(
+        paddle.static.Program(), paddle.static.Program()
+    ):
+        x_pd = paddle.static.data("X", shape=x_shape, dtype=dtype)
+        min_pd = paddle.static.data("Min", shape=min_shape, dtype=dtype)
+        max_pd = paddle.static.data("Max", shape=max_shape, dtype=dtype)
+        pd_out = paddle.clip(x_pd, min_pd, max_pd)
+        exe = base.Executor(place)
+        (res,) = exe.run(
+            feed={"X": x, "Min": min, "Max": max}, fetch_list=[pd_out]
+        )
+        np.allclose(res, np_out)
+
+    paddle.disable_static()
+
+
+class TestClipTensorAPI(unittest.TestCase):
+
+    def test_check_output_int32(self):
+        np_pd_equal([4, 5], [5], [1], 'int32')
+    
+    def test_check_output_float32(self):
+        np_pd_equal([4], [5, 4], [4], 'float32')
+    
+    def test_check_output_int64(self):
+        np_pd_equal([4, 5], [5], [4, 5], 'int64')
+    
+    def test_check_output_Nonemin(self):
+        paddle.disable_static()
+        x = np.random.randn(4, 5).astype('float32')
+        max = np.random.randn(4, 4, 5).astype('float32')
+        min = float(np.finfo(np.float32).min)
+        np_out = np.clip(x, min, max)
+        x_pd = paddle.to_tensor(x, dtype='float32')
+        max_pd = paddle.to_tensor(max, dtype='float32')
+        pd_out = paddle.clip(x_pd, None, max_pd)
+        np.allclose(pd_out.numpy(), np_out)
+
+        x_pd.clip_(None, max_pd)
+        np.allclose(x_pd.numpy(), np_out)
+        paddle.enable_static()
+
+    def test_check_static_output_int32(self):
+        np_pd_static_equal([4], [5, 4], [6, 5, 4], 'int32')
+    
+    def test_check_static_output_int64(self):
+        np_pd_static_equal([4, 5], [5], [4, 5], 'int64')
+
+    def test_check_static_output_float32(self):
+        np_pd_static_equal([4], [5, 4], [4], 'float32')
+
+    def test_check_static_output_Nonemin(self):
+        paddle.enable_static()
+        with base.program_guard(base.Program(), base.Program()):
+            x = np.random.randn(4, 5).astype('float32')
+            max = np.random.randn(4, 4, 5).astype('float32')
+            min = float(np.finfo(np.float32).min)
+            np_out = np.clip(x, min, max)
+
+            place = paddle.CPUPlace()
+            if core.is_compiled_with_cuda():
+                place = paddle.CUDAPlace(0)
+            x_pd = paddle.static.data("X", shape=[4, 5], dtype='float32')
+            max_pd = paddle.static.data("Max", shape=[4, 4, 5], dtype='float32')
+            pd_out = paddle.clip(x_pd, None, max_pd)
+            exe = base.Executor(place)
+            res = exe.run(feed={'X': x, 'Max': max}, fetch_list=[pd_out])
+            np.allclose(res[0], np_out)
+        paddle.disable_static()
+    
+    def test_fp16(self):
+        if base.core.is_compiled_with_cuda():
+            paddle.enable_static()
+            data_shape = [1, 9, 9, 4]
+            data = np.random.random(data_shape).astype('float16')
+            min1 = np.random.random(data_shape).astype('float16')
+            max2 = np.random.random(data_shape).astype('float16')
+
+            with paddle.static.program_guard(paddle.static.Program()):
+                images = paddle.static.data(
+                    name='image1', shape=data_shape, dtype='float16'
+                )
+                min = paddle.static.data(
+                    name='min1', shape=data_shape, dtype='float16'
+                )
+                max = paddle.static.data(
+                    name='max1', shape=data_shape, dtype='float16'
+                )
+                out = paddle.tensor.math.clip_tensor(images, min, max)
+                place = paddle.CUDAPlace(0)
+                exe = paddle.static.Executor(place)
+                res1 = exe.run(
+                    feed={
+                        "image1": data,
+                        "min1": min1,
+                        "max1": max2,
+                    },
+                    fetch_list=[out],
+                )
+            paddle.disable_static()
+
+
 if __name__ == '__main__':
     unittest.main()
